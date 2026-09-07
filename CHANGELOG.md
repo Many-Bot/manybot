@@ -1,12 +1,23 @@
 # Changelog
 
-## v5.11.0 - 2026-09-01
+## v5.12.0 - In-development
 
 ### New Features
-- **`AUTO_READ_MESSAGES` configuration** — Now you can choose whether the bot should automatically mark every incoming message as read (blue check). Off by default to avoid interfering with specific integrations.
-- **Enhanced Contact Discovery** — Improved how the bot retrieves contact names and pushnames during the `getId` process by merging cached snapshots, ensuring names are available immediately even in new sessions.
+
+- `ctx.chat.getChat(jid)`: look up any other chat (group or DM) by JID, returning a new `ChatContext` with the same shape (itself `getChat()`-able). Useful for groups discovered via `ctx.chats.all()` or stored earlier by a plugin.
+- `ctx.chat.getMsg(msgId)`: look up any message by ID alone, the owning chat's JID is resolved automatically via a new `msgId -> jid` store index, so `.reply()`/`.react()` work on an old/stored message ID.
 
 ### Fixed
-- **`EADDRINUSE` crashes during plugin reload** — Plugins now correctly run their `api.events.cleanup()` export before being reloaded or disabled, ensuring ports and resources are released.
-- **Contact lookup accuracy** — Added `denormalizeJid` to improve contact lookup across different WhatsApp JID formats.
-- **Plugin cleanup consistency** — Refactored cleanup logic into a centralized `cleanupPluginExports` function to ensure reliable resource release.
+
+- Pairing code instructions now show the correct full path.
+
+### Refactors
+
+- Fixed config/`commands.yaml` reload debounce timers (`configReloadTimeout` / `yamlReloadTimeout`) not being cleared on `cleanupPlugins()`, which could leave a dangling timer after shutdown.
+
+### Build / CI
+
+- Added `prepare` npm script (`scripts/install-local-hooks.sh`) that points the clone's git hooks at `scripts/local-hooks/` on `npm install`.
+- New local `pre-commit` hook: auto-bumps `packages/types/package.json` minor version when staged changes touch the published `@manybot/types` definitions (`packages/types/{en,pt}`).
+- Renamed `hooks/` to `scripts/git-hooks/` (server-side release infra, no contributor impact).
+
