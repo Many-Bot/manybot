@@ -374,6 +374,16 @@ export interface IChat {
    *   group (bot not a member, wrong id, etc.) — never throws.
    */
   getChat(jid: string): Promise<IChat | null>;
+  /**
+   * Native lookup of any message by its ID alone — the kernel resolves
+   * the owning chat's JID automatically (no need to store it
+   * separately). Returns the same `msg` shape as `ctx.msg`, so
+   * `.reply()`, `.react()`, etc. work on an old/stored message ID just
+   * like they do on the current one.
+   * @param msgId - The message ID (e.g. saved from an earlier `ctx.msg.id`).
+   * @returns The message, or `null` if the ID is unknown/evicted.
+   */
+  getMsg(msgId: string): Promise<WAMessageContext | null>;
 }
 
 // Sub-facet: utils for the message being handled. Imported as the

@@ -143,6 +143,45 @@ test("store evicts oldest messages when exceeding MAX_MSGS_PER_CHAT (200)", () =
   assert.equal(chatMap?.has("msg-205"), true); // kept
 });
 
+test("store resolves a message by ID alone via getMessageById", () => {
+  const store = createStore();
+  const ev = new EventEmitter();
+  store.bind(ev as never);
+
+  const jid = "chat-idx@s.whatsapp.net";
+  ev.emit("messages.upsert", {
+    messages: [{
+      key: { id: "msg-idx-1", remoteJid: jid },
+      message: { conversation: "hello" },
+    }],
+  });
+
+  const found = store.getMessageById("msg-idx-1");
+  assert.equal(found?.jid, jid);
+  assert.equal(found?.msg.key.id, "msg-idx-1");
+
+  assert.equal(store.getMessageById("does-not-exist"), null);
+});
+
+test("store evicts a message's ID-index entry alongside the message itself", () => {
+  const store = createStore();
+  const ev = new EventEmitter();
+  store.bind(ev as never);
+
+  const jid = "chat-idx-evict@s.whatsapp.net";
+  const messages = [];
+  for (let i = 1; i <= 205; i++) {
+    messages.push({
+      key: { id: `evict-${i}`, remoteJid: jid },
+      message: { conversation: `text ${i}` },
+    });
+  }
+  ev.emit("messages.upsert", { messages });
+
+  assert.equal(store.getMessageById("evict-1"), null); // evicted
+  assert.equal(store.getMessageById("evict-205")?.jid, jid); // kept
+});
+
 test("store accumulates poll updates on messages.update", () => {
   const store = createStore();
   const ev = new EventEmitter();
@@ -203,3 +242,4 @@ test("store processes messaging-history.set backfill", () => {
   assert.equal(store.contacts["hist-user@s.whatsapp.net"]?.name, "Dave");
   assert.equal(store.contacts["hist-chat@s.whatsapp.net"]?.notify, "Dave Push");
 });
+

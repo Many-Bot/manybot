@@ -2783,6 +2783,21 @@ function buildChatFacet(
       if (!meta) return null;
       return buildChatFacet(jid, meta.name, meta.isGroup, contract, store, msg, sender, matchesParticipant);
     },
+
+    /**
+     * Native lookup of any message by ID — the owning chat's JID is
+     * resolved automatically off the store's `msgId -> jid` index
+     * (see `BotStore.getMessageById`), so callers only need to have
+     * kept the ID around.
+     * @param {string} msgId
+     * @returns {Promise<WAMessageContext | null>}
+     */
+    async getMsg(msgId: string): Promise<WAMessageContext | null> {
+      const found = store.getMessageById(msgId);
+      if (!found) return null;
+      const botMsg = toBotMessage(found.msg as WAProtoMsg);
+      return buildMessageContext(botMsg, contract, store, { cooldown: false, jitter: false });
+    },
   };
 }
 

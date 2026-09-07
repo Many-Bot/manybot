@@ -71,6 +71,16 @@ export interface BotStore {
    */
   readonly messages: Map<string, Map<string, RawMessage>>;
   /**
+   * Resolve a message by its ID alone, without knowing which chat it
+   * came from — backed by a `msgId -> jid` index kept in sync as
+   * messages arrive (and evicted alongside `messages`). Returns the raw
+   * message plus the resolved chat JID, or `null` if the ID is unknown
+   * or was evicted. Note: WhatsApp message IDs aren't guaranteed unique
+   * across chats; the index keeps the most recent chat seen for a given
+   * ID.
+   */
+  getMessageById(id: string): { jid: string; msg: RawMessage } | null;
+  /**
    * Resolve a `@lid` JID to the traditional `@s.whatsapp.net` JID when a
    * mapping has been learned (from contacts or message keys). Returns the
    * input unchanged if it's not a `@lid` JID or no mapping is known yet.
@@ -134,6 +144,9 @@ export function createStore(): BotStore {
   const chatsMap    = new Map<string, StoreChat>();
   const contacts: Record<string, RawStoreContact> = {};
   const messages    = new Map<string, Map<string, RawMessage>>();
+  // msgId -> jid, kept in lockstep with `messages` so a message can be
+  // looked up by ID alone (see getMessageById()).
+  const idIndex     = new Map<string, string>();
   // @lid JID → traditional @s.whatsapp.net JID, learned from contact and
   // message-key pairs (Baileys exposes both forms during the LID rollout).
   const lidMap      = new Map<string, string>();
@@ -240,12 +253,23 @@ export function createStore(): BotStore {
     const chatMsgs = messages.get(jid)!;
 
     chatMsgs.set(id, msg);
+    idIndex.set(id, jid);
 
     // Evict oldest entries if over limit
     if (chatMsgs.size > MAX_MSGS_PER_CHAT) {
       const oldest = chatMsgs.keys().next().value;
-      if (typeof oldest === "string") chatMsgs.delete(oldest);
+      if (typeof oldest === "string") {
+        chatMsgs.delete(oldest);
+        if (idIndex.get(oldest) === jid) idIndex.delete(oldest);
+      }
     }
+  }
+
+  function getMessageById(id: string): { jid: string; msg: RawMessage } | null {
+    const jid = idIndex.get(id);
+    if (!jid) return null;
+    const msg = messages.get(jid)?.get(id);
+    return msg ? { jid, msg } : null;
   }
 
   // pushName only ever arrives on a message stanza (live or synced history)
@@ -386,6 +410,7 @@ export function createStore(): BotStore {
     },
     contacts,
     messages,
+    getMessageById,
     resolveJid,
     learnLid,
     forgetLid,
