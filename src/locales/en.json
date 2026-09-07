@@ -16,7 +16,7 @@
     "qrScan": "Scan the QR Code below:",
     "pairingCodeTitle": "Pairing code:",
     "pairingCodeValue": "→ {{code}} ←",
-    "pairingCodeInstructions": "Enter this code in WhatsApp: Menu → Linked devices → Link with phone number",
+    "pairingCodeInstructions": "Enter this code in WhatsApp: Menu → Linked devices → Link a device → Link with phone number instead",
     "phoneNumberInvalid": "Invalid phone number: {{number}}. Expected format: 5511999999999 (country code + area code + number, no spaces or special characters)",
     "clientId": "Client ID: {{id}}",
     "pluginsLoaded": "Plugins loaded: {{count}} active{{errors}}",

@@ -16,7 +16,7 @@
     "qrScan": "Escanea el Código QR abajo:",
     "pairingCodeTitle": "Código de emparejamiento:",
     "pairingCodeValue": "→ {{code}} ←",
-    "pairingCodeInstructions": "Ingresa este código en WhatsApp: Menú → Dispositivos vinculados → Vincular con número de teléfono",
+    "pairingCodeInstructions": "Ingresa este código en WhatsApp: Menú → Dispositivos vinculados → Vincular un dispositivo → Vincular con el número de teléfono",
     "phoneNumberInvalid": "Número de teléfono inválido: {{number}}. Formato esperado: 5511999999999 (código de país + área + número, sin espacios ni caracteres especiales)",
     "clientId": "Client ID: {{id}}",
     "pluginsLoaded": "Plugins cargados: {{count}} activos{{errors}}",
