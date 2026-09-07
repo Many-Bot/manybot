@@ -874,6 +874,16 @@ export interface ChatContext {
    * ```
    */
   getChat(jid: string): Promise<ChatContext | null>;
+  /**
+   * Native lookup of any message by its ID alone — the kernel resolves
+   * the owning chat's JID automatically (no need to store it
+   * separately). Returns the same shape as `ctx.msg`, so `.reply()`,
+   * `.react()`, etc. work on an old/stored message ID just like they
+   * do on the current one.
+   * @param msgId - The message ID (e.g. saved from an earlier `ctx.msg.id`).
+   * @returns The message, or `null` if the ID is unknown/evicted.
+   */
+  getMsg(msgId: string): Promise<WAMessageContext | null>;
 }
 
 // ── Admin API (ctx.admin) ───────────────────────────────────────────────────
