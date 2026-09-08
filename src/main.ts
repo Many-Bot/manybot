@@ -75,8 +75,9 @@ process.on("uncaughtException", (err) => {
 });
 
 process.on("unhandledRejection", (reason) => {
-  const msg = reason instanceof Error ? reason.message : String(reason);
-  shutdown(`${t("bot.error.unhandled")}: ${msg}`, true);
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  const stackFrame = err.stack?.split("\n")[1]?.trim() ?? "";
+  shutdown(`${t("bot.error.unhandled")}: ${err.message}\n             ${t("errors.stack")}: ${stackFrame}`, true);
 });
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));

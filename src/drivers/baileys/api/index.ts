@@ -1869,7 +1869,29 @@ function buildEventsApi(contract: WaContract, pluginName: string) {
   return {
     on<E extends WaEventName>(event: E, handler: (payload: WaEventPayload<E>) => void): () => void {
       assertSupportedEvent(event);
-      const wrapped = (payload: unknown) => handler(payload as WaEventPayload<E>);
+      // Wrap the plugin's handler so neither a synchronous throw nor an
+      // async rejection escapes as a bot-wide crash. Previously only sync
+      // throws were caught (by adapter.ts's emit(), with no plugin name
+      // attached); an async handler that rejected after its first `await`
+      // fell straight through to process's unhandledRejection, which is
+      // why crash alerts couldn't say which plugin caused them.
+      const wrapped = (payload: unknown) => {
+        const logRejection = (e: unknown, kind: "threw" | "rejected") => {
+          const err   = e instanceof Error ? e : new Error(String(e));
+          const frame = err.stack?.split("\n")[1]?.trim() ?? "(no stack)";
+          logger.error(`[${pluginName}] event handler for "${event}" ${kind}: ${err.message}`);
+          logger.error(`  at      : ${frame}`);
+        };
+
+        try {
+          const result = handler(payload as WaEventPayload<E>);
+          if (result instanceof Promise) {
+            result.catch((e) => logRejection(e, "rejected"));
+          }
+        } catch (e) {
+          logRejection(e, "threw");
+        }
+      };
       const detach  = contract.on(event, wrapped);
 
       if (!listenerRegistry.has(pluginName)) listenerRegistry.set(pluginName, new Set());
